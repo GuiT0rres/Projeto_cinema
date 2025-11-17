@@ -39,7 +39,6 @@ def listar_sessoes():
     cursor = None
     try:
         cursor = con.cursor()
-        # SQL modificado para incluir o JOIN com a tabela filme
         sql = """
             SELECT 
                 s.id_sessao, 

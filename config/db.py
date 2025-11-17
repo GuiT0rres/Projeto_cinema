@@ -1,6 +1,6 @@
-import psycopg2
-import os
-from dotenv import load_dotenv
+import psycopg2 
+import os #Para utilizar juntamente ao dotenv afim de ler o arquivo .env
+from dotenv import load_dotenv # Para ler oq está guardado no arquivo .env
 
 load_dotenv() 
 

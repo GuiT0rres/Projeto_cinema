@@ -9,7 +9,7 @@ def inserir_sala(numero, capacidade, tipo):
     try:
         cursor = con.cursor()
         
-        # --- Etapa 1: Inserir a Sala ---
+        #1. Inserir a Sala
         sql_sala = """
             INSERT INTO sala (numero_sala, capacidade, tipo_sala)
             VALUES (%s, %s, %s)
@@ -19,7 +19,7 @@ def inserir_sala(numero, capacidade, tipo):
         sala_id = cursor.fetchone()[0]
         print(f"✅ Sala {numero} cadastrada com ID {sala_id}! Populando assentos...")
 
-        # --- Etapa 2: Popular os Assentos ---
+        #2. Popular os Assentos
         assentos_para_criar = []
         for i in range(1, capacidade + 1):
             numero_assento = f"A{i}" 
@@ -28,7 +28,7 @@ def inserir_sala(numero, capacidade, tipo):
         sql_assentos = "INSERT INTO assento (numero_assento, id_sala) VALUES (%s, %s)"
         cursor.executemany(sql_assentos, assentos_para_criar)
         
-        # --- Etapa 3: Commit da Transação ---
+        #3. Commit da Transação
         con.commit() # Salva a sala E os assentos juntos
         
         print(f"✅ {len(assentos_para_criar)} assentos criados para a Sala {numero}.")
@@ -37,7 +37,7 @@ def inserir_sala(numero, capacidade, tipo):
     except Exception as e:
         print(f"❌ Erro ao inserir sala e assentos: {e}")
         if con:
-            con.rollback() # Desfaz tudo se algo der errado
+            con.rollback()
         return False
     
     finally:
@@ -78,7 +78,7 @@ def deletar_sala(id_sala):
     try:
         cursor = con.cursor()
         
-        # --- ETAPA 1: VERIFICAR SESSÕES ---
+        #1. VERIFICAR SESSÕES
         cursor.execute("SELECT COUNT(*) FROM sessao WHERE id_sala = %s", (id_sala,))
         qtd_sessoes = cursor.fetchone()[0]
         
@@ -87,11 +87,11 @@ def deletar_sala(id_sala):
             print(f"   Ela está sendo usada em {qtd_sessoes} sessão(ões).")
             return False
         
-        # --- ETAPA 2: Deletar os assentos ---
+        #2. Deletar os assentos
         cursor.execute("DELETE FROM assento WHERE id_sala = %s", (id_sala,))
         print(f"ℹ️  Assentos da Sala ID {id_sala} removidos...")
         
-        # --- ETAPA 3: Deletar a sala ---
+        #3: Deletar a sala
         cursor.execute("DELETE FROM sala WHERE id_sala = %s", (id_sala,))
         
         con.commit()

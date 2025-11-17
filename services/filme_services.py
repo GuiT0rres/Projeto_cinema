@@ -39,7 +39,6 @@ def listar_filmes():
     
     try:
         cursor = con.cursor()
-        # SQL une as 3 tabelas e agrupa os diretores em uma string
         sql = """
             SELECT 
                 f.id_filme, 
@@ -126,21 +125,18 @@ def deletar_filme(id_filme):
     try:
         cursor = con.cursor()
         
-        # 1. Verificar se está vinculado a uma sessão
         cursor.execute("SELECT COUNT(*) FROM sessao WHERE id_filme = %s", (id_filme,))
         qtd_sessoes = cursor.fetchone()[0]
         if qtd_sessoes > 0:
             print(f"❌ Não é possível deletar! Filme está em {qtd_sessoes} sessão(ões).")
             return False
             
-        # 2. Verificar se está vinculado a um diretor
         cursor.execute("SELECT COUNT(*) FROM filme_diretor WHERE id_filme = %s", (id_filme,))
         qtd_diretores = cursor.fetchone()[0]
         if qtd_diretores > 0:
             print(f"❌ Não é possível deletar! Filme está vinculado a {qtd_diretores} diretor(es).")
             return False
 
-        # 3. Se passou em ambos, pode deletar
         cursor.execute("DELETE FROM filme WHERE id_filme = %s", (id_filme,))
         con.commit()
         

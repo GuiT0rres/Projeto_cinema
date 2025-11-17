@@ -20,7 +20,6 @@ def inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, nome_cliente, 
             print("❌ Esse assento já está ocupado nesta sessão!")
             return False
         
-        # --- LÓGICA DE CLIENTE MELHORADA ---
         
         # 2. Verificar se o cliente já existe pelo CPF
         cursor.execute("SELECT id_cliente, ativo FROM clientes WHERE CPF = %s", (cpf_cliente,))
@@ -40,7 +39,7 @@ def inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, nome_cliente, 
             print(f"ℹ️ Cliente já cadastrado (ID: {id_cliente})")
             
         else:
-            # 5. Criar novo cliente (se não foi encontrado)
+            # 4. Criar novo cliente (se não foi encontrado)
             cursor.execute("""
                 INSERT INTO clientes (CPF, nome, email, ativo)
                 VALUES (%s, %s, %s, TRUE)
@@ -49,7 +48,7 @@ def inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, nome_cliente, 
             id_cliente = cursor.fetchone()[0]
             print(f"✅ Cliente '{nome_cliente}' cadastrado com ID {id_cliente}!")
         
-        # 6. Inserir o ingresso
+        # 5. Inserir o ingresso
         sql = """
             INSERT INTO ingressos (preco, tipo_ingresso, id_assento, id_sessao, id_cliente)
             VALUES (%s, %s, %s, %s, %s)
@@ -60,6 +59,7 @@ def inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, nome_cliente, 
         con.commit()
         print(f"🎟️ Ingresso cadastrado com ID {ingresso_id}!")
         return True
+
     except Exception as e:
         print(f"❌ Erro ao inserir ingresso: {e}")
         if con:
@@ -70,7 +70,6 @@ def inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, nome_cliente, 
             cursor.close()
         if con:
             con.close()
-
 
 def listar_ingressos():
     """Lista todos os ingressos cadastrados"""

@@ -10,15 +10,15 @@ def inserir_cliente(nome, cpf, email):
     try:
         cursor = con.cursor()
         
-        cursor.execute("SELECT id_cliente, ativo FROM clientes WHERE CPF = %s", (cpf,))
+        cursor.execute("SELECT id_cliente, ativo FROM clientes WHERE CPF = %s", (cpf,)) #Procura se já tem esse cliente ativo no bd
         resultado = cursor.fetchone()
         
         if resultado:
-            id_cliente_existente, cliente_esta_ativo = resultado[0], resultado[1]
+            id_cliente_existente, cliente_esta_ativo = resultado[0], resultado[1] #Verifica se cliente existe e se está ativo
             
             if not cliente_esta_ativo:
                 print(f"ℹ️  Cliente com CPF {cpf} está inativo.")
-                reativar = input("   Deseja reativar? (s/n): ")
+                reativar = input("   Deseja reativar? (s/n): ") #Cliente inativo, pergunta se quer reativar
                 
                 if reativar.lower() == 's':
                     cursor.execute(
@@ -27,7 +27,7 @@ def inserir_cliente(nome, cpf, email):
                     )
                     con.commit()
                     print(f"✅ Cliente reativado e atualizado (ID: {id_cliente_existente})!")
-                    return True
+                    return True #Reativa cliente e atualiza os dados
                 else:
                     print("❌ Operação cancelada!")
                     return False
@@ -41,7 +41,7 @@ def inserir_cliente(nome, cpf, email):
             RETURNING id_cliente
         """
         cursor.execute(sql, (cpf, nome, email))
-        cliente_id = cursor.fetchone()[0]
+        cliente_id = cursor.fetchone()[0] #Devolve ID do cliente
         con.commit()
         print(f"✅ Cliente '{nome}' cadastrado com ID {cliente_id}!")
         return True
@@ -49,7 +49,7 @@ def inserir_cliente(nome, cpf, email):
     except Exception as e:
         print(f"❌ Erro ao inserir cliente: {e}")
         if con:
-            con.rollback()
+            con.rollback() #Garante que caso dê erro, o banco não salve dados incompletos ou corrompidos
         return False
     finally:
         if cursor:
@@ -58,12 +58,9 @@ def inserir_cliente(nome, cpf, email):
             con.close()
 
 
-def listar_clientes(incluir_inativos=False):
+def listar_clientes(incluir_inativos=False): 
     """
-    Lista todos os clientes cadastrados
-    
-    Args:
-        incluir_inativos: Se True, lista também clientes desativados
+    Lista os clientes cadastrados, se incluir_inativos = true também mostra os desativados
     """
     con = criar_conexao()
     if not con:

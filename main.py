@@ -1,4 +1,5 @@
 # --- IMPORTS COMPLETOS ---
+from datetime import datetime
 from services.filme_services import (
     inserir_filme, 
     listar_filmes, 
@@ -25,7 +26,7 @@ from services.sessao_services import (
 from services.ingressos_services import (
     inserir_ingresso, 
     listar_ingressos, 
-    listar_assentos_disponiveis, # Corrigido de 'disponiveIS'
+    listar_assentos_disponiveis,
     listar_assentos_ocupados,
     verificar_disponibilidade_sessao,
     deletar_ingresso
@@ -37,7 +38,7 @@ from services.cliente_services import (
     reativar_cliente
 )
 
-# --- PREÇOS GLOBAIS (NÍVEL DO MÓDULO) ---
+
 # Inicializados como 0.0 para forçar o usuário a definir
 PRECO_INTEIRA = 0.0
 PRECO_MEIA = 0.0
@@ -156,8 +157,14 @@ def menu_diretores():
 
             elif opcao == '2':
                 print("\n📋 LISTA DE DIRETORES")
-                diretores = listar_diretores(incluir_inativos=True) 
+                
+                ver_inativos = input("Deseja ver também os diretores inativos? (s/n): ").strip().lower()
+                mostrar_tudo = (ver_inativos == 's')
+                
+                diretores = listar_diretores(incluir_inativos=mostrar_tudo) 
+                
                 if diretores:
+                    print(f"\n--- Exibindo {'TODOS' if mostrar_tudo else 'ATIVOS'} ---")
                     for d in diretores:
                         status = "✅" if d[3] else "❌ INATIVO" 
                         print(f"  [{d[0]}] {d[1]} - {d[2]} (Status: {status})")
@@ -239,7 +246,6 @@ def menu_clientes():
                 print("\n➕ ADICIONAR CLIENTE")
                 nome = input("Nome: ")
                 
-                # --- INÍCIO DA VALIDAÇÃO DO CPF ---
                 while True:
                     cpf = input("CPF (apenas 11 números): ")
                     
@@ -251,21 +257,28 @@ def menu_clientes():
                         print(f"❌ ERRO: O CPF deve ter 11 dígitos. Você digitou {len(cpf)}.")
                         continue 
                     
-                    break # CPF é válido
-                # --- FIM DA VALIDAÇÃO ---
+                    break 
                 
                 email = input("Email: ")
                 inserir_cliente(nome, cpf, email)
             
             elif opcao == '2':
                 print("\n📋 LISTA DE CLIENTES")
-                clientes = listar_clientes(incluir_inativos=True)
+                
+                ver_inativos = input("Deseja ver também os clientes inativos/excluídos? (s/n): ").strip().lower()
+                
+                mostrar_tudo = (ver_inativos == 's') 
+                
+                clientes = listar_clientes(incluir_inativos=mostrar_tudo)
+                
                 if clientes:
+                    print(f"\n--- Exibindo {'TODOS' if mostrar_tudo else 'ATIVOS'} ---")
                     for c in clientes:
-                        status = "✅" if c[4] else "❌ INATIVO"
-                        print(f"  [{c[0]}] {c[2]} - CPF: {c[1]} (Status: {status})")
+                        is_ativo = c[4]                     
+                        status_icon = "✅" if is_ativo else "❌ INATIVO"
+                        print(f"  [{c[0]}] {c[2]} - CPF: {c[1]} - {status_icon}")
                 else:
-                    print("  Nenhum cliente cadastrado.")
+                    print("Nenhum cliente encontrado.")
             
             elif opcao == '3':
                 print("\n👻 DESATIVAR CLIENTE")
@@ -342,7 +355,7 @@ def menu_salas_sessoes():
                     for s in salas:
                         print(f"  [{s[0]}] Sala {s[1]} - Capacidade: {s[2]} - Tipo: {s[3]}")
                 else:
-                    print("  Nenhuma sala cadastrada.")
+                    print("Nenhuma sala cadastrada.")
 
             elif opcao == '3':
                 print("\n🗑️ DELETAR SALA")
@@ -358,7 +371,18 @@ def menu_salas_sessoes():
 
             elif opcao == '4':
                 print("\n➕ ADICIONAR SESSÃO")
-                data = input("Data (AAAA-MM-DD): ")
+                while True:
+                    data = input("Data (AAAA-MM-DD): ")
+                    try:
+                        data_validada = datetime.strptime(data, "%Y-%m-%d")
+                        if data_validada < datetime.now():
+                             print("⚠️  Aviso: Essa data já passou!")
+                             confirma = input("   Deseja continuar mesmo assim? (s/n): ")
+                             if confirma.lower() != 's':
+                                 continue
+                        break 
+                    except ValueError:
+                        print("❌ Data inválida ou inexistente! Use o formato AAAA-MM-DD.")
                 horario = input("Horário (HH:MM): ")
                 tipo_exibicao = input("Tipo de exibição (2D/3D/IMAX): ")
                 
@@ -385,7 +409,6 @@ def menu_salas_sessoes():
                 sessoes = listar_sessoes()
                 if sessoes:
                     for s in sessoes:
-                        # s[5] é o título do filme
                         print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
                 else:
                     print("  Nenhuma sessão cadastrada.")
@@ -425,7 +448,7 @@ def definir_precos():
     """
     Define os preços globais dos ingressos (Inteira e Meia).
     """
-    global PRECO_INTEIRA, PRECO_MEIA # Permite modificar as variáveis globais
+    global PRECO_INTEIRA, PRECO_MEIA
     
     print("\n⚙️ DEFINIR PREÇOS DOS INGRESSOS")
     print(f"   Preço ATUAL (Inteira): R$ {PRECO_INTEIRA:.2f}")
@@ -434,7 +457,6 @@ def definir_precos():
     try:
         novo_preco_inteira_str = input(f"\nNovo preço INTEIRA (Deixe em branco para manter R$ {PRECO_INTEIRA:.2f}): ")
         if novo_preco_inteira_str:
-            # Substitui vírgula por ponto para evitar erros
             PRECO_INTEIRA = float(novo_preco_inteira_str.replace(',', '.'))
         
         novo_preco_meia_str = input(f"Novo preço MEIA (Deixe em branco para manter R$ {PRECO_MEIA:.2f}): ")
@@ -489,7 +511,6 @@ def menu_vendas():
                 
                 print("\n📺 Sessões disponíveis:")
                 for s in sessoes:
-                    # s[5] é o título do filme
                     print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
                 
                 id_sessao = int(input("\nID da Sessão: "))
@@ -508,7 +529,6 @@ def menu_vendas():
                 
                 print("\n💺 Assentos disponíveis:")
                 for i, assento in enumerate(assentos_disp, 1):
-                    # assento[0] = id_assento, assento[1] = numero_assento
                     print(f"  [{assento[0]}] {assento[1]}", end="  ") 
                     if i % 10 == 0: print()
                 print()
@@ -541,7 +561,6 @@ def menu_vendas():
                 print("\n👤 DADOS DO CLIENTE")
                 nome_cliente = input("Nome: ")
                 
-                # --- INÍCIO DA VALIDAÇÃO DO CPF ---
                 while True:
                     cpf_cliente = input("CPF (apenas 11 números): ")
                     
@@ -553,8 +572,7 @@ def menu_vendas():
                         print(f"❌ ERRO: O CPF deve ter 11 dígitos. Você digitou {len(cpf_cliente)}.")
                         continue 
                     
-                    break # CPF é válido
-                # --- FIM DA VALIDAÇÃO ---
+                    break
                 
                 email_cliente = input("Email: ")
                 
