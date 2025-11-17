@@ -54,6 +54,10 @@ def listar_filmes():
             GROUP BY f.id_filme
             ORDER BY f.id_filme
         """
+        #String_AGG Junta todos os diretores do mesmo filme em uma única linha
+        #Left join pega o filme, vê se tem vínculo na tabela filme_diretor 
+        #e então vai na tabela diretor pegar o nome do diretor
+
         cursor.execute(sql)
         filmes = cursor.fetchall()
         return filmes

@@ -97,6 +97,11 @@ def listar_ingressos():
             INNER JOIN clientes c ON i.id_cliente = c.id_cliente
             ORDER BY i.id_ingresso
         """
+        #Inner join assento diz qual o número do assento
+        #Inner join sessão diz qual o horário e data da sessão do ingresso
+        #Inner join filme pega o filme que está vinculado a sessão
+        #Inner join clientes pega o cliente vinculado ao ingresso
+
         cursor.execute(sql)
         ingressos = cursor.fetchall()
         return ingressos
@@ -175,6 +180,10 @@ def listar_assentos_ocupados(id_sessao):
             WHERE i.id_sessao = %s
             ORDER BY a.numero_assento
         """
+        #INNER JOIN assento: Pega o código visual do assento (ex: A5) para mostrar no mapa.
+        #INNER JOIN clientes: Descobre o nome da pessoa que ocupou aquele lugar.
+        #WHERE: Filtra apenas os ingressos vendidos para ESTA sessão específica.
+
         cursor.execute(sql, (id_sessao,))
         assentos = cursor.fetchall()
         return assentos
@@ -235,6 +244,11 @@ def listar_ingressos_por_cliente(id_cliente):
             WHERE i.id_cliente = %s
             ORDER BY s.data, s.horario
         """
+        # Inner join assento: Mostra o número da cadeira comprada.
+        # Inner join sessão: Busca a data e hora da sessão.
+        # Inner join filme: Busca o nome do filme (conectado através da sessão).
+        # WHERE: Traz apenas o histórico desse cliente específico.
+
         cursor.execute(sql, (id_cliente,))
         ingressos = cursor.fetchall()
         return ingressos
@@ -270,6 +284,9 @@ def listar_ingressos_por_sessao(id_sessao):
             WHERE i.id_sessao = %s
             ORDER BY a.numero_assento
         """
+        # Inner join clientes: Descobre o nome de quem comprou o ingresso.
+        # Inner join assento: Identifica qual cadeira foi reservada (ex: B5).
+        # WHERE: Filtra a lista para mostrar apenas as vendas DESTA sessão específica.
         cursor.execute(sql, (id_sessao,))
         ingressos = cursor.fetchall()
         return ingressos
@@ -334,11 +351,13 @@ def verificar_disponibilidade_sessao(id_sessao):
             WHERE s.id_sessao = %s
             GROUP BY sa.capacidade
         """
+        # (sa.capacidade - COUNT(i.id_ingresso)) as disponiveis Cálculo SQL: (Capacidade - Contagem) = Assentos Disponíveis.
+        # INNER JOIN sala: Busca a capacidade total da sala (dado obrigatório).
+        # LEFT JOIN ingressos: Busca os ingressos vendidos (pode ser zero).
+        
         cursor.execute(sql, (id_sessao,))
         resultado = cursor.fetchone()
         
-        # Se a sessão for nova e não tiver ingressos, o LEFT JOIN pode
-        # não retornar nada. Esta lógica garante um retorno.
         if not resultado:
              cursor.execute("""
                 SELECT sa.capacidade, 0 as vendidos, sa.capacidade as disponiveis
@@ -346,6 +365,7 @@ def verificar_disponibilidade_sessao(id_sessao):
                 INNER JOIN sala sa ON s.id_sala = sa.id_sala
                 WHERE s.id_sessao = %s
              """, (id_sessao,))
+             # IF NOT RESULTADO: Se a busca falhar, assume que a sessão é nova (0 vendas).
              resultado = cursor.fetchone()
 
         return resultado

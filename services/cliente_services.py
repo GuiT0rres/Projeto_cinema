@@ -308,6 +308,9 @@ def listar_clientes_com_ingressos():
             GROUP BY c.id_cliente, c.nome, c.CPF, c.email, c.ativo
             ORDER BY total_ingressos DESC
         """
+        #Left Join aqui pega todos os clientes e tenta encontrar ingressos deles na de ingressos, quando encontra junta os dados, se não encontrar traz o cliente só que sem ingressos. 
+        # No ON verifica o ID do cliente com o anotado no ingresso. 
+        # Group by junta todas as vezes q um cliente aparece em uma única e o COUNT conta quantas vezes apareceu
         cursor.execute(sql)
         clientes = cursor.fetchall()
         return clientes

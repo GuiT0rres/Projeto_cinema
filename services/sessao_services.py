@@ -52,6 +52,8 @@ def listar_sessoes():
             INNER JOIN filme f ON s.id_filme = f.id_filme
             ORDER BY s.data, s.horario
         """
+        # Inner join filme: Busca o título do filme vinculado a esta sessão (traduz o ID_filme).
+        # ORDER BY: Organiza a lista cronologicamente (data primeiro, depois horário).
         cursor.execute(sql)
         sessoes = cursor.fetchall()
         return sessoes
