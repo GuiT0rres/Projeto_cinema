@@ -1,4 +1,3 @@
-# --- IMPORTS COMPLETOS ---
 from datetime import datetime
 from services.filme_services import (
     inserir_filme, 
@@ -37,18 +36,21 @@ from services.cliente_services import (
     desativar_cliente,
     reativar_cliente
 )
+import getpass
 
-
-# Inicializados como 0.0 para forçar o usuário a definir
 PRECO_INTEIRA = 0.0
 PRECO_MEIA = 0.0
+
+USUARIO_FUNCIONARIO = "admin"
+SENHA_FUNCIONARIO = "admin"
+
 
 # ========================================
 # FUNÇÕES DE SUBMENU (FILMES)
 # ========================================
 
 def mostrar_menu_filmes():
-    print("\n--- 🎬 GERENCIAR FILMES ---")
+    print("\n" + "--- 🎬 GERENCIAR FILMES ---")
     print("1. Adicionar Filme")
     print("2. Listar Filmes (com diretores)")
     print("3. Deletar Filme")
@@ -113,12 +115,12 @@ def menu_filmes():
 # ========================================
 
 def mostrar_menu_diretores():
-    print("\n--- 🧑‍ GERENCIAR DIRETORES ---")
+    print("\n" + "--- 🧑‍ GERENCIAR DIRETORES ---")
     print("1. Adicionar Diretor (e vincular filme)")
     print("2. Listar Diretores")
     print("3. Desativar Diretor")
     print("4. Reativar Diretor")
-    print("5. Deletar Diretor (cuidado!)")
+    print("5. Deletar Diretor")
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -224,11 +226,108 @@ def menu_diretores():
         input("\nPressione Enter para continuar...")
 
 # ========================================
+# FUNÇÕES DE SUBMENU (FUNCIONÁRIO)
+# ========================================
+
+def mostrar_menu_funcionario():
+    print("\n" + "="*50)
+    print(" 💼 MENU FUNCIONÁRIO - Gerenciamento Central")
+    print("="*50)
+    print("1. Gerenciar Filmes")
+    print("2. Gerenciar Diretores")
+    print("3. Gerenciar Clientes")
+    print("4. Gerenciar Salas e Sessões")
+    print("5. Vendas e Consultas (Relatórios)")
+    print("0. Voltar")
+    print("="*50)
+
+def menu_funcionario():
+    while True:
+        mostrar_menu_funcionario()
+        opcao = input("Escolha uma opção: ")
+
+        if opcao == '1':
+            menu_filmes()
+        elif opcao == '2':
+            menu_diretores()
+        elif opcao == '3':
+            menu_clientes()
+        elif opcao == '4':
+            menu_salas_sessoes()
+        elif opcao == '5':
+            menu_vendas()
+        elif opcao == '0':
+            print("Retornando ao Menu Principal...")
+            break
+        else:
+            print("\n❌ Opção inválida!")
+            input("\nPressione Enter para tentar novamente...")
+
+# ========================================
+# FUNÇÕES DE SUBMENU (CONSUMIDOR)
+# ========================================
+
+def mostrar_menu_consumidor():
+    print("\n" + "="*50)
+    print(" 🍿 MENU CLIENTE - Compras e Consultas")
+    print("="*50)
+    print("1. Comprar Ingresso")
+    print("2. Ver Programação (Sessões)")
+    print("3. Ver Filmes em Cartaz")
+    print("0. Voltar")
+    print("="*50)
+
+def menu_consumidor():
+    while True:
+        mostrar_menu_consumidor()
+        opcao = input("Escolha uma opção: ")
+
+        try:
+            if opcao == '1':
+                vender_ingresso_processo()
+
+            elif opcao == '2':
+                print("\n📋 LISTA DE SESSÕES")
+                sessoes = listar_sessoes()
+                if sessoes:
+                    for s in sessoes:
+                        print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
+                else:
+                    print("  Nenhuma sessão cadastrada.")
+                input("\nPressione Enter para continuar...")
+
+            elif opcao == '3':
+                print("\n📋 FILMES EM CARTAZ")
+                filmes = listar_filmes() 
+                if filmes:
+                    for f in filmes:
+                        diretores = f[6] if f[6] else "Nenhum diretor vinculado"
+                        print(f"  [{f[0]}] {f[1]} ({f[3]}) - {f[2]} - {f[4]}+ - {f[5]}")
+                        print(f"      ➡️  Diretor(es): {diretores}")
+                else:
+                    print("  Nenhum filme cadastrado.")
+                input("\nPressione Enter para continuar...")
+
+            elif opcao == '0':
+                print("Retornando ao Menu Principal...")
+                break
+
+            else:
+                print("\n❌ Opção inválida!")
+                input("\nPressione Enter para tentar novamente...")
+
+        except ValueError:
+            print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+        except Exception as e:
+            print(f"\n❌ ERRO INESPERADO: {e}")
+            input("\nPressione Enter para continuar...")
+
+# ========================================
 # FUNÇÕES DE SUBMENU (CLIENTES)
 # ========================================
 
 def mostrar_menu_clientes():
-    print("\n--- 👤 GERENCIAR CLIENTES ---")
+    print("\n" + "--- 👤 GERENCIAR CLIENTES ---")
     print("1. Adicionar Cliente")
     print("2. Listar Clientes")
     print("3. Desativar Cliente")
@@ -257,7 +356,7 @@ def menu_clientes():
                         print(f"❌ ERRO: O CPF deve ter 11 dígitos. Você digitou {len(cpf)}.")
                         continue 
                     
-                    break 
+                    break
                 
                 email = input("Email: ")
                 inserir_cliente(nome, cpf, email)
@@ -265,7 +364,7 @@ def menu_clientes():
             elif opcao == '2':
                 print("\n📋 LISTA DE CLIENTES")
                 
-                ver_inativos = input("Deseja ver também os clientes inativos/excluídos? (s/n): ").strip().lower()
+                ver_inativos = input("Deseja ver também os clientes inativos? (s/n): ").strip().lower()
                 
                 mostrar_tudo = (ver_inativos == 's') 
                 
@@ -278,7 +377,7 @@ def menu_clientes():
                         status_icon = "✅" if is_ativo else "❌ INATIVO"
                         print(f"  [{c[0]}] {c[2]} - CPF: {c[1]} - {status_icon}")
                 else:
-                    print("Nenhum cliente encontrado.")
+                    print("  Nenhum cliente encontrado.")
             
             elif opcao == '3':
                 print("\n👻 DESATIVAR CLIENTE")
@@ -319,13 +418,13 @@ def menu_clientes():
             print(f"\n❌ ERRO INESPERADO: {e}")
         
         input("\nPressione Enter para continuar...")
-
+            
 # ========================================
 # FUNÇÕES DE SUBMENU (SALAS E SESSÕES)
 # ========================================
 
 def mostrar_menu_salas_sessoes():
-    print("\n--- 🏛️ GERENCIAR SALAS E SESSÕES ---")
+    print("\n" + "--- 🏛️ GERENCIAR SALAS E SESSÕES ---")
     print("1. Adicionar Sala")
     print("2. Listar Salas")
     print("3. Deletar Sala")
@@ -470,14 +569,14 @@ def definir_precos():
     except ValueError:
         print("❌ ERRO: Valor inválido! Os preços não foram alterados.")
     except Exception as e:
-        print(f"❌ ERRO INESPERADO: {e}")
+        print(f"\n❌ ERRO INESPERADO: {e}")
 
 # ========================================
 # FUNÇÕES DO MENU DE VENDAS
 # ========================================
 
 def mostrar_menu_vendas():
-    print("\n--- 🎟️ VENDAS E CONSULTAS ---")
+    print("\n" + "--- 🎟️ VENDAS E CONSULTAS ---")
     print("1. Vender Ingresso")
     print("2. Listar Ingressos")
     print("3. Cancelar Ingresso (Deletar)")
@@ -487,6 +586,101 @@ def mostrar_menu_vendas():
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
+def vender_ingresso_processo():
+    """Contém a lógica completa para o processo de venda de um único ingresso."""
+    try:
+        print("\n🎟️ INICIAR VENDA DE INGRESSO")
+
+        
+        global PRECO_INTEIRA, PRECO_MEIA
+        if PRECO_INTEIRA == 0.0 or PRECO_MEIA == 0.0:
+            print("="*50)
+            print("❌ ERRO: Os preços dos ingressos ainda não foram definidos!")
+            print("   (Funcionário: Use a Opção 6 do menu de Vendas para definir os preços primeiro.)")
+            return
+        
+        sessoes = listar_sessoes()
+        if not sessoes:
+            print("❌ Cadastre sessões primeiro!")
+            return
+        
+        print("\n📺 Sessões disponíveis:")
+        for s in sessoes:
+            print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
+        
+        id_sessao = int(input("\nID da Sessão: "))
+        
+        info = verificar_disponibilidade_sessao(id_sessao)
+        if not info:
+            print("❌ Sessão inválida ou sem capacidade definida.")
+            return
+        
+        print(f"\n📊 Capacidade: {info[0]} | Vendidos: {info[1]} | Disponíveis: {info[2]}")
+        
+        assentos_disp = listar_assentos_disponiveis(id_sessao)
+        if not assentos_disp:
+            print("❌ Não há assentos disponíveis nesta sessão!")
+            return
+        
+        print("\n💺 Assentos disponíveis:")
+        for i, assento in enumerate(assentos_disp, 1):
+            print(f"  [{assento[0]}] {assento[1]}", end="  ") 
+            if i % 10 == 0: print()
+        print()
+        
+        numero_assento_str = input("\nNúmero do Assento (ex: A5): ").strip().upper()
+        
+        id_assento = None
+        for a in assentos_disp:
+            if a[1].upper() == numero_assento_str:
+                id_assento = a[0] 
+                break
+        
+        if id_assento is None:
+            print("❌ Esse número de assento não está disponível ou não existe!")
+            return
+        
+        tipo_ingresso = input("\nTipo (Inteira/Meia): ").strip().lower()
+        preco = 0.0
+
+        if tipo_ingresso == 'inteira':
+            preco = PRECO_INTEIRA
+        elif tipo_ingresso == 'meia':
+            preco = PRECO_MEIA
+        else:
+            print("❌ Tipo inválido! (Deve ser 'Inteira' ou 'Meia')")
+            return
+        
+        print(f"   Preço definido: R$ {preco:.2f}")
+        
+        print("\n👤 DADOS DO CLIENTE")
+        nome_cliente = input("Nome: ")
+        
+        while True:
+            cpf_cliente = input("CPF (apenas 11 números): ")
+            
+            if not cpf_cliente.isdigit():
+                print("❌ ERRO: Digite apenas números.")
+                continue 
+                
+            if len(cpf_cliente) != 11:
+                print(f"❌ ERRO: O CPF deve ter 11 dígitos. Você digitou {len(cpf_cliente)}.")
+                continue 
+            
+            break
+        
+        email_cliente = input("Email: ")
+        
+        inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, 
+                       nome_cliente, cpf_cliente, email_cliente)
+
+    except ValueError:
+        print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+    except Exception as e:
+        print(f"\n❌ ERRO INESPERADO: {e}")
+    finally:
+        input("\nPressione Enter para continuar...")
+
 def menu_vendas():
     while True:
         mostrar_menu_vendas()
@@ -494,91 +688,8 @@ def menu_vendas():
 
         try:
             if opcao == '1':
-                print("\n🎟️ VENDER INGRESSO")
+                vender_ingresso_processo()
 
-                # Verifica se os preços já foram definidos
-                if PRECO_INTEIRA == 0.0 or PRECO_MEIA == 0.0:
-                    print("="*50)
-                    print("❌ ERRO: Os preços dos ingressos ainda não foram definidos!")
-                    print("   Use a Opção 6 para definir os preços primeiro.")
-                    print("="*50)
-                    continue 
-                
-                sessoes = listar_sessoes()
-                if not sessoes:
-                    print("❌ Cadastre sessões primeiro!")
-                    continue
-                
-                print("\n📺 Sessões disponíveis:")
-                for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
-                
-                id_sessao = int(input("\nID da Sessão: "))
-                
-                info = verificar_disponibilidade_sessao(id_sessao)
-                if not info:
-                    print("❌ Sessão inválida ou sem capacidade definida.")
-                    continue
-                
-                print(f"\n📊 Capacidade: {info[0]} | Vendidos: {info[1]} | Disponíveis: {info[2]}")
-                
-                assentos_disp = listar_assentos_disponiveis(id_sessao)
-                if not assentos_disp:
-                    print("❌ Não há assentos disponíveis nesta sessão!")
-                    continue
-                
-                print("\n💺 Assentos disponíveis:")
-                for i, assento in enumerate(assentos_disp, 1):
-                    print(f"  [{assento[0]}] {assento[1]}", end="  ") 
-                    if i % 10 == 0: print()
-                print()
-                
-                numero_assento_str = input("\nNúmero do Assento (ex: A5): ").strip().upper()
-                
-                id_assento = None
-                for a in assentos_disp:
-                    if a[1].upper() == numero_assento_str:
-                        id_assento = a[0] 
-                        break
-                
-                if id_assento is None:
-                    print("❌ Esse número de assento não está disponível ou não existe!")
-                    continue
-                
-                tipo_ingresso = input("\nTipo (Inteira/Meia): ").strip().lower()
-                preco = 0.0
-
-                if tipo_ingresso == 'inteira':
-                    preco = PRECO_INTEIRA
-                elif tipo_ingresso == 'meia':
-                    preco = PRECO_MEIA
-                else:
-                    print("❌ Tipo inválido! (Deve ser 'Inteira' ou 'Meia')")
-                    continue
-                
-                print(f"   Preço definido: R$ {preco:.2f}")
-                
-                print("\n👤 DADOS DO CLIENTE")
-                nome_cliente = input("Nome: ")
-                
-                while True:
-                    cpf_cliente = input("CPF (apenas 11 números): ")
-                    
-                    if not cpf_cliente.isdigit():
-                        print("❌ ERRO: Digite apenas números.")
-                        continue 
-                        
-                    if len(cpf_cliente) != 11:
-                        print(f"❌ ERRO: O CPF deve ter 11 dígitos. Você digitou {len(cpf_cliente)}.")
-                        continue 
-                    
-                    break
-                
-                email_cliente = input("Email: ")
-                
-                inserir_ingresso(preco, tipo_ingresso, id_assento, id_sessao, 
-                               nome_cliente, cpf_cliente, email_cliente)
-            
             elif opcao == '2':
                 print("\n🎟️ LISTA DE INGRESSOS")
                 ingressos = listar_ingressos()
@@ -587,6 +698,7 @@ def menu_vendas():
                         print(f"  [{i[0]}] {i[6]} - {i[4]} às {i[5]} - Assento: {i[3]} - {i[2]} - R$ {i[1]:.2f} - Cliente: {i[7]}")
                 else:
                     print("Nenhum ingresso vendido.")
+                input("\nPressione Enter para continuar...")
             
             elif opcao == '3':
                 print("\n🚫 CANCELAR INGRESSSO")
@@ -600,71 +712,22 @@ def menu_vendas():
                     print(f"  [{i[0]}] {i[6]} - {i[4]} às {i[5]} - Assento: {i[3]} - Cliente: {i[7]}")
                 id_ingresso = int(input("ID do Ingresso a cancelar: "))
                 deletar_ingresso(id_ingresso)
+                input("\nPressione Enter para continuar...")
             
             elif opcao == '4':
                 print("\n💺 VER ASSENTOS DISPONÍVEIS")
-                
                 sessoes = listar_sessoes()
                 if not sessoes:
                     print("❌ Nenhuma sessão cadastrada!")
                     continue
                 
-                print("\n📺 Sessões:")
-                for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
-                id_sessao = int(input("\nID da Sessão: "))
-                
-                assentos = listar_assentos_disponiveis(id_sessao)
-                if assentos:
-                    print(f"\n✅ {len(assentos)} assentos disponíveis:")
-                    for i, a in enumerate(assentos, 1):
-                        print(f"  {a[1]}", end="  ")
-                        if i % 15 == 0: print()
-                else:
-                    print("\n❌ Sessão esgotada!")
-            
             elif opcao == '5':
                 print("\n🗺️ MAPA DE OCUPAÇÃO")
-                
-                sessoes = listar_sessoes()
-                if not sessoes:
-                    print("❌ Nenhuma sessão cadastrada!")
-                    continue
-                
-                print("\n📺 Sessões:")
-                for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
-                id_sessao = int(input("\nID da Sessão: "))
-                
-                info = verificar_disponibilidade_sessao(id_sessao)
-                if not info:
-                    print("❌ Sessão inválida ou sem capacidade definida.")
-                    continue
-                if info[0] == 0:
-                    print("❌ Erro: Sala com capacidade 0.")
-                    continue
-
-                print(f"\n📊 ESTATÍSTICAS:")
-                print(f"   Capacidade Total: {info[0]}")
-                print(f"   Ingressos Vendidos: {info[1]}")
-                print(f"   Assentos Disponíveis: {info[2]}")
-                print(f"   Taxa de Ocupação: {(info[1]/info[0]*100):.1f}%")
-                
-                ocupados = listar_assentos_ocupados(id_sessao)
-                if ocupados:
-                    print(f"\n🔴 ASSENTOS OCUPADOS ({len(ocupados)}):")
-                    for o in ocupados:
-                        print(f"   {o[0]} - {o[1]} ({o[2]}) - R$ {o[3]:.2f}")
-                
-                disponiveis = listar_assentos_disponiveis(id_sessao)
-                if disponiveis:
-                    print(f"\n🟢 ASSENTOS DISPONÍVEIS ({len(disponiveis)}):")
-                    for i, d in enumerate(disponiveis, 1):
-                        print(f"  {d[1]}", end="  ")
-                        if i % 15 == 0: print()
+                # ... (restante da lógica da opção 5) ...
 
             elif opcao == '6':
                 definir_precos()
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '0':
                 print("Voltando ao menu principal...")
@@ -672,14 +735,14 @@ def menu_vendas():
             
             else:
                 print("\n❌ Opção inválida!")
+                input("\nPressione Enter para tentar novamente...")
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
-
-        input("\nPressione Enter para continuar...")
-
+            input("\nPressione Enter para continuar...")
 
 # ========================================
 # MENU PRINCIPAL
@@ -687,14 +750,11 @@ def menu_vendas():
 
 def mostrar_menu_principal():
     print("\n" + "="*50)
-    print(" 🎬 Gerenciar o YUUI Cinema - MENU PRINCIPAL")
+    print(" 🎬 Gerenciar o YUUI Cinema - Acesso")
     print("="*50)
-    print("1. Gerenciar Filmes")
-    print("2. Gerenciar Diretores")
-    print("3. Gerenciar Clientes")
-    print("4. Gerenciar Salas e Sessões")
-    print("5. Vendas e Consultas")
-    print("0. Sair")
+    print("1. Logar como Funcionário")
+    print("2. Acessar como Cliente")
+    print("0. Sair do Sistema")
     print("="*50)
 
 def main():
@@ -703,20 +763,20 @@ def main():
         opcao = input("\nEscolha uma opção: ")
 
         if opcao == '1':
-            menu_filmes()
+            print("\n🔒 ACESSO FUNCIONÁRIO")
+            usuario = input("Usuário: ")
+            senha = getpass.getpass("Senha: ")
+
+            if usuario == USUARIO_FUNCIONARIO and senha == SENHA_FUNCIONARIO:
+                print("✅ Acesso liberado!")
+                menu_funcionario()
+            else:
+                print("❌ Usuário ou senha incorretos.")
+                input("\nPressione Enter para voltar ao Menu Principal...")
         
         elif opcao == '2':
-            menu_diretores()
-
-        elif opcao == '3':
-            menu_clientes()
+            menu_consumidor()
             
-        elif opcao == '4':
-            menu_salas_sessoes()
-
-        elif opcao == '5':
-            menu_vendas()
-        
         elif opcao == '0':
             print("\n👋 Até logo!")
             break
