@@ -464,7 +464,6 @@ def menu_clientes():
                 
                 # 3. Se status for True (Sucesso, 0 ingressos)
                 elif status is True:
-                    # Imprime a mensagem de sucesso que o serviço NÃO deve imprimir mais
                     print(f"✅ Cliente ID {id_cliente} removido permanentemente.")
                 
                 # 4. Falha geral / ID não encontrado
