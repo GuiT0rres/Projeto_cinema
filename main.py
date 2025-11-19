@@ -34,7 +34,9 @@ from services.cliente_services import (
     listar_clientes, 
     inserir_cliente, 
     desativar_cliente,
-    reativar_cliente
+    reativar_cliente,
+    deletar_cliente,
+    deletar_cliente_e_ingressos_forcado
 )
 import getpass
 
@@ -105,10 +107,13 @@ def menu_filmes():
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
-        
-        input("\nPressione Enter para continuar...")
+            input("\nPressione Enter para continuar...")
 
 # ========================================
 # FUNÇÕES DE SUBMENU (DIRETORES)
@@ -209,7 +214,26 @@ def menu_diretores():
                 print("\n👤 Diretores (Ativos e Inativos):")
                 for d in diretores: print(f"  [{d[0]}] {d[1]}")
                 id_diretor = int(input("ID do Diretor a deletar: "))
-                deletar_diretor(id_diretor, forcar=False)
+                
+                status = deletar_diretor(id_diretor, forcar=False)
+                
+                # Checa se o tipo é INT e se é maior que zero
+                if type(status) is int and status > 0: 
+                    print(f"❌ Não é possível deletar! Diretor possui {status} filme(s) vinculado(s).")
+                    confirmacao = input("Deseja FORÇAR e remover os vínculos? (s/n): ")
+                    
+                    if confirmacao.lower() == 's':
+                        deletar_diretor(id_diretor, forcar=True)
+                        print(f"✅ Diretor ID {id_diretor} removido (vínculos removidos).")
+                        input("\nPressione Enter para continuar...") 
+                    else:
+                        print("❌ Operação cancelada.")
+                        input("\nPressione Enter para continuar...")
+                
+                # Sucesso sem vínculos (status é True)
+                elif status is True: 
+                    print(f"✅ Diretor ID {id_diretor} removido (Sem vínculos encontrados).")
+                    input("\nPressione Enter para continuar...")
 
             elif opcao == '0':
                 print("Voltando ao menu principal...")
@@ -220,10 +244,13 @@ def menu_diretores():
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
-
-        input("\nPressione Enter para continuar...")
+            input("\nPressione Enter para continuar...")
 
 # ========================================
 # FUNÇÕES DE SUBMENU (FUNCIONÁRIO)
@@ -291,7 +318,7 @@ def menu_consumidor():
                 sessoes = listar_sessoes()
                 if sessoes:
                     for s in sessoes:
-                        print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
+                        print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala: {s[4]}")
                 else:
                     print("  Nenhuma sessão cadastrada.")
                 input("\nPressione Enter para continuar...")
@@ -318,6 +345,10 @@ def menu_consumidor():
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
             input("\nPressione Enter para continuar...")
@@ -332,6 +363,7 @@ def mostrar_menu_clientes():
     print("2. Listar Clientes")
     print("3. Desativar Cliente")
     print("4. Reativar Cliente")
+    print("5. Deletar Cliente (PERMANENTE)")
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -405,6 +437,42 @@ def menu_clientes():
                 id_cliente = int(input("\nID do Cliente a reativar: "))
                 reativar_cliente(id_cliente)
 
+            elif opcao == '5':
+                print("\n🚨 DELETAR CLIENTE (PERMANENTE)")
+                clientes = listar_clientes(incluir_inativos=True)
+                if not clientes:
+                    print("❌ Nenhum cliente para deletar.")
+                    continue
+                
+                print("\n👤 Clientes:")
+                for c in clientes: print(f"  [{c[0]}] {c[2]} - CPF: {c[1]}")
+                id_cliente = int(input("ID do Cliente a deletar: "))
+                
+                # 1. Tenta deletar (Retorna INT count se bloqueado, ou True/False)
+                status = deletar_cliente(id_cliente)
+                
+                # 2. Se status for um NÚMERO (Contagem de Ingressos)
+                if type(status) is int and status > 0:
+                    print(f"❌ Não é possível deletar! Cliente possui {status} ingresso(s) vinculado(s).")
+                    confirmacao = input("Deseja FORÇAR a exclusão e CANCELAR os ingressos? (s/n): ")
+                    
+                    if confirmacao.lower() == 's':
+                        # Chama a função forçada (que imprime a mensagem de sucesso)
+                        deletar_cliente_e_ingressos_forcado(id_cliente)
+                    else:
+                        print("❌ Operação cancelada.")   
+                
+                # 3. Se status for True (Sucesso, 0 ingressos)
+                elif status is True:
+                    # Imprime a mensagem de sucesso que o serviço NÃO deve imprimir mais
+                    print(f"✅ Cliente ID {id_cliente} removido permanentemente.")
+                
+                # 4. Falha geral / ID não encontrado
+                else:
+                    print("❌ Falha na operação ou ID não encontrado.")
+
+                input("\nPressione Enter para continuar...") 
+
             elif opcao == '0':
                 print("Voltando ao menu principal...")
                 break
@@ -414,10 +482,13 @@ def menu_clientes():
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
-        
-        input("\nPressione Enter para continuar...")
+            input("\nPressione Enter para continuar...")
             
 # ========================================
 # FUNÇÕES DE SUBMENU (SALAS E SESSÕES)
@@ -534,10 +605,13 @@ def menu_salas_sessoes():
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
-
-        input("\nPressione Enter para continuar...")
+            input("\nPressione Enter para continuar...")
 
 # ========================================
 # FUNÇÃO PARA DEFINIR PREÇOS
@@ -567,9 +641,13 @@ def definir_precos():
         print(f"   Meia:    R$ {PRECO_MEIA:.2f}")
         
     except ValueError:
-        print("❌ ERRO: Valor inválido! Os preços não foram alterados.")
+            print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+    except KeyboardInterrupt:
+        print("\nInterrupção manual detectada. Encerrando...")
     except Exception as e:
         print(f"\n❌ ERRO INESPERADO: {e}")
+        input("\nPressione Enter para continuar...")
 
 # ========================================
 # FUNÇÕES DO MENU DE VENDAS
@@ -675,10 +753,12 @@ def vender_ingresso_processo():
                        nome_cliente, cpf_cliente, email_cliente)
 
     except ValueError:
-        print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
+            input("\nPressione Enter para continuar...")
+    except KeyboardInterrupt:
+        print("\nInterrupção manual detectada. Encerrando...")
     except Exception as e:
         print(f"\n❌ ERRO INESPERADO: {e}")
-    finally:
         input("\nPressione Enter para continuar...")
 
 def menu_vendas():
@@ -716,14 +796,67 @@ def menu_vendas():
             
             elif opcao == '4':
                 print("\n💺 VER ASSENTOS DISPONÍVEIS")
+                
                 sessoes = listar_sessoes()
                 if not sessoes:
                     print("❌ Nenhuma sessão cadastrada!")
                     continue
                 
+                print("\n📺 Sessões:")
+                for s in sessoes:
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
+                id_sessao = int(input("\nID da Sessão: "))
+                
+                assentos = listar_assentos_disponiveis(id_sessao)
+                if assentos:
+                    print(f"\n✅ {len(assentos)} assentos disponíveis:")
+                    for i, a in enumerate(assentos, 1):
+                        print(f"  {a[1]}", end="  ")
+                        if i % 15 == 0: print()
+                else:
+                    print("\n❌ Sessão esgotada!")
+                
+                input("\nPressione Enter para continuar...")
+                
             elif opcao == '5':
                 print("\n🗺️ MAPA DE OCUPAÇÃO")
-                # ... (restante da lógica da opção 5) ...
+                
+                sessoes = listar_sessoes()
+                if not sessoes:
+                    print("❌ Nenhuma sessão cadastrada!")
+                    continue
+                
+                print("\n📺 Sessões:")
+                for s in sessoes:
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
+                id_sessao = int(input("\nID da Sessão: "))
+                
+                info = verificar_disponibilidade_sessao(id_sessao)
+                if not info:
+                    print("❌ Sessão inválida ou sem capacidade definida.")
+                    continue
+                if info[0] == 0:
+                    print("❌ Erro: Sala com capacidade 0.")
+                    continue
+
+                print(f"\n📊 ESTATÍSTICAS:")
+                print(f"   Capacidade Total: {info[0]}")
+                print(f"   Ingressos Vendidos: {info[1]}")
+                print(f"   Assentos Disponíveis: {info[2]}")
+                print(f"   Taxa de Ocupação: {(info[1]/info[0]*100):.1f}%")
+                
+                ocupados = listar_assentos_ocupados(id_sessao)
+                if ocupados:
+                    print(f"\n🔴 ASSENTOS OCUPADOS ({len(ocupados)}):")
+                    for o in ocupados:
+                        print(f"   {o[0]} - {o[1]} ({o[2]}) - R$ {o[3]:.2f}")
+                
+                disponiveis = listar_assentos_disponiveis(id_sessao)
+                if disponiveis:
+                    print(f"\n🟢 ASSENTOS DISPONÍVEIS ({len(disponiveis)}):")
+                    for i, d in enumerate(disponiveis, 1):
+                        print(f"  {d[1]}", end="  ")
+                        if i % 15 == 0: print()
 
             elif opcao == '6':
                 definir_precos()
@@ -740,6 +873,9 @@ def menu_vendas():
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
             input("\nPressione Enter para continuar...")
+        except KeyboardInterrupt:
+            print("\nInterrupção manual detectada. Encerrando...")
+            break 
         except Exception as e:
             print(f"\n❌ ERRO INESPERADO: {e}")
             input("\nPressione Enter para continuar...")

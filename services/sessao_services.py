@@ -40,17 +40,18 @@ def listar_sessoes():
     try:
         cursor = con.cursor()
         sql = """
-            SELECT 
-                s.id_sessao, 
-                s.data, 
-                s.horario, 
-                s.tipo_exibicao, 
-                s.id_sala, 
-                f.titulo,  -- Coluna nova (índice 5)
-                s.id_filme -- Coluna antiga (agora índice 6)
-            FROM sessao s
-            INNER JOIN filme f ON s.id_filme = f.id_filme
-            ORDER BY s.data, s.horario
+        SELECT 
+            s.id_sessao, 
+            s.data, 
+            s.horario, 
+            s.tipo_exibicao, 
+            sa.numero_sala, 
+            f.titulo,  
+            s.id_filme
+        FROM sessao s
+        INNER JOIN filme f ON s.id_filme = f.id_filme
+        INNER JOIN sala sa ON s.id_sala = sa.id_sala
+        ORDER BY s.data, s.horario
         """
         # Inner join filme: Busca o título do filme vinculado a esta sessão (traduz o ID_filme).
         # ORDER BY: Organiza a lista cronologicamente (data primeiro, depois horário).
@@ -68,41 +69,35 @@ def listar_sessoes():
 
 
 def deletar_sessao(id_sessao):
-    """Deleta uma sessão APENAS se não houver ingressos vendidos"""
+    """Deleta uma sessão e todos os ingressos vendidos para ela."""
     con = criar_conexao()
     if not con:
         return False
-    
+
     cursor = None
     try:
         cursor = con.cursor()
+
+        # 1. Deletar ingressos dependentes (ingressos)
+        cursor.execute("DELETE FROM ingressos WHERE id_sessao = %s", (id_sessao,))
+        print(f"ℹ️ {cursor.rowcount} ingresso(s) cancelado(s).")
         
-        check_sql = "SELECT COUNT(id_ingresso) FROM ingressos WHERE id_sessao = %s"
-        cursor.execute(check_sql, (id_sessao,))
-        contagem_ingressos = cursor.fetchone()[0]
-        
-        if contagem_ingressos > 0:
-            print(f"❌ ERRO: Você não pode deletar a Sessão ID {id_sessao} porque ela já possui {contagem_ingressos} ingresso(s) vendido(s).")
-            return False
-            
-        delete_sql = "DELETE FROM sessao WHERE id_sessao = %s"
-        cursor.execute(delete_sql, (id_sessao,))
-        con.commit()
+        # 2. Deletar a sessão
+        cursor.execute("DELETE FROM sessao WHERE id_sessao = %s", (id_sessao,))
         
         if cursor.rowcount > 0:
-            print(f"✅ Sessão ID {id_sessao} removida!")
+            con.commit()
+            print(f"✅ Sessão ID {id_sessao} deletada permanentemente.")
             return True
         else:
-            print(f"ℹ️ Sessão ID {id_sessao} não encontrada.")
+            print(f"❌ Sessão ID {id_sessao} não encontrada.")
             return False
-            
+
     except Exception as e:
         print(f"❌ Erro ao deletar sessão: {e}")
         if con:
             con.rollback()
         return False
     finally:
-        if cursor:
-            cursor.close()
-        if con:
-            con.close()
+        if cursor: cursor.close()
+        if con: con.close()

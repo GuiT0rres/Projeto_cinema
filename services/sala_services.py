@@ -69,47 +69,44 @@ def listar_salas():
 
 
 def deletar_sala(id_sala):
-    """Deleta uma sala APENAS se não houver sessões agendadas nela"""
+    """Deleta uma sala, removendo assentos vinculados e verificando se há sessões ativas nela."""
     con = criar_conexao()
     if not con:
         return False
-    
+
     cursor = None
     try:
         cursor = con.cursor()
         
-        #1. VERIFICAR SESSÕES
+        # 1. VERIFICAÇÃO PRINCIPAL: Checa se há SESSÕES vinculadas (Prioridade máxima de bloqueio)
         cursor.execute("SELECT COUNT(*) FROM sessao WHERE id_sala = %s", (id_sala,))
         qtd_sessoes = cursor.fetchone()[0]
         
         if qtd_sessoes > 0:
-            print(f"❌ Não é possível deletar a Sala ID {id_sala}.")
-            print(f"   Ela está sendo usada em {qtd_sessoes} sessão(ões).")
-            return False
-        
-        #2. Deletar os assentos
-        cursor.execute("DELETE FROM assento WHERE id_sala = %s", (id_sala,))
-        print(f"ℹ️  Assentos da Sala ID {id_sala} removidos...")
-        
-        #3: Deletar a sala
-        cursor.execute("DELETE FROM sala WHERE id_sala = %s", (id_sala,))
-        
-        con.commit()
-        
-        if cursor.rowcount > 0:
-            print(f"✅ Sala ID {id_sala} e seus assentos foram removidos!")
-            return True
-        else:
-            print(f"ℹ️ Sala ID {id_sala} não encontrada.")
+            print(f"❌ Sala ID {id_sala} não pode ser deletada. Possui {qtd_sessoes} sessão(ões) vinculada(s).")
+            print("   Deletar as sessões primeiro para liberar a sala.")
             return False
             
+        # 2. CASCADE MANUAL: Deletar ASSENTOS vinculados (Resolve a Foreign Key de 'assento')
+        cursor.execute("DELETE FROM assento WHERE id_sala = %s", (id_sala,))
+        print(f"ℹ️ {cursor.rowcount} assento(s) removido(s) da sala.")
+
+        # 3. Deletar a sala
+        cursor.execute("DELETE FROM sala WHERE id_sala = %s", (id_sala,))
+        
+        if cursor.rowcount > 0:
+            con.commit()
+            print(f"✅ Sala ID {id_sala} deletada permanentemente.")
+            return True
+        else:
+            print(f"❌ Sala ID {id_sala} não encontrada.")
+            return False
+
     except Exception as e:
         print(f"❌ Erro ao deletar sala: {e}")
         if con:
             con.rollback()
         return False
     finally:
-        if cursor:
-            cursor.close()
-        if con:
-            con.close()
+        if cursor: cursor.close()
+        if con: con.close()

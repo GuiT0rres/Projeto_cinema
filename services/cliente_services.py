@@ -163,63 +163,77 @@ def atualizar_cliente(id_cliente, nome=None, email=None):
             con.close()
 
 
-def deletar_cliente(id_cliente, forcar=False):
-    """
-    Remove um cliente
-    
-    Args:
-        id_cliente: ID do cliente a ser removido
-        forcar: Se True, remove os ingressos antes de deletar o cliente
-               Se False, apenas verifica e impede a exclusão
-    """
+def deletar_cliente(id_cliente):
+    """Deleta um cliente se não houver ingressos. Retorna a contagem de ingressos vinculados se a exclusão for bloqueada."""
     con = criar_conexao()
     if not con:
         return False
-    
+
     cursor = None
     try:
         cursor = con.cursor()
         
-        cursor.execute(
-            "SELECT COUNT(*) FROM ingressos WHERE id_cliente = %s", 
-            (id_cliente,)
-        )
+        # 1. Checa se há INGRESSOS vinculados
+        cursor.execute("SELECT COUNT(*) FROM ingressos WHERE id_cliente = %s", (id_cliente,))
         qtd_ingressos = cursor.fetchone()[0]
         
         if qtd_ingressos > 0:
-            if forcar:
-                # Opção 1: Deletar ingressos em cascata
-                print(f"⚠️  Cliente possui {qtd_ingressos} ingresso(s).")
-                confirmacao = input("   Deseja deletar os ingressos também? (s/n): ")
-                
-                if confirmacao.lower() == 's':
-                    cursor.execute("DELETE FROM ingressos WHERE id_cliente = %s", (id_cliente,))
-                    print(f"   ✅ {qtd_ingressos} ingresso(s) deletado(s)")
-                else:
-                    print("   ❌ Operação cancelada!")
-                    return False
-            else:
-                # Opção 2: Apenas avisar e impedir
-                print(f"❌ Não é possível deletar!")
-                print(f"   Cliente possui {qtd_ingressos} ingresso(s) vinculado(s).")
-                print(f"   Use deletar_cliente(id, forcar=True) para forçar a exclusão.")
-                return False
-        
+            # Retorna a contagem, para que o menu decida o que fazer
+            return qtd_ingressos
+            
+        # 2. Deletar o cliente (se qtd_ingressos for 0)
         cursor.execute("DELETE FROM clientes WHERE id_cliente = %s", (id_cliente,))
-        con.commit()
-        print(f"✅ Cliente ID {id_cliente} removido!")
-        return True
         
+        if cursor.rowcount > 0:
+            con.commit()
+            return True
+        else:
+            print(f"❌ Cliente ID {id_cliente} não encontrado.")
+            return False
+
     except Exception as e:
         print(f"❌ Erro ao deletar cliente: {e}")
         if con:
             con.rollback()
         return False
     finally:
-        if cursor:
-            cursor.close()
+        if cursor: cursor.close()
+        if con: con.close()
+
+
+def deletar_cliente_e_ingressos_forcado(id_cliente):
+    """Função auxiliar para exclusão forçada."""
+    con = criar_conexao()
+    if not con:
+        return False
+
+    cursor = None
+    try:
+        cursor = con.cursor()
+
+        # 1. Remove os ingressos
+        cursor.execute("DELETE FROM ingressos WHERE id_cliente = %s", (id_cliente,))
+        print(f"ℹ️ {cursor.rowcount} ingresso(s) deletado(s) forçadamente.")
+
+        # 2. Deletar o cliente
+        cursor.execute("DELETE FROM clientes WHERE id_cliente = %s", (id_cliente,))
+        
+        if cursor.rowcount > 0:
+            con.commit()
+            print(f"✅ Cliente ID {id_cliente} removido permanentemente (e ingressos cancelados).")
+            return True
+        else:
+            print(f"❌ Cliente ID {id_cliente} não encontrado.")
+            return False
+
+    except Exception as e:
+        print(f"❌ Erro ao forçar deleção de cliente: {e}")
         if con:
-            con.close()
+            con.rollback()
+        return False
+    finally:
+        if cursor: cursor.close()
+        if con: con.close()
 
 
 def desativar_cliente(id_cliente):

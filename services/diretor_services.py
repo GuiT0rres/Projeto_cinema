@@ -154,14 +154,6 @@ def atualizar_diretor(id_diretor, nome=None, nacionalidade=None):
 
 
 def deletar_diretor(id_diretor, forcar=False):
-    """
-    Remove um diretor
-    
-    Args:
-        id_diretor: ID do diretor a ser removido
-        forcar: Se True, remove os vínculos com filmes antes de deletar
-               Se False, apenas verifica e impede a exclusão
-    """
     con = criar_conexao()
     if not con:
         return False
@@ -178,26 +170,16 @@ def deletar_diretor(id_diretor, forcar=False):
         
         if qtd_filmes > 0:
             if forcar:
-                print(f"⚠️  Diretor possui {qtd_filmes} filme(s) vinculado(s).")
-                confirmacao = input("   Deseja remover os vínculos e deletar? (s/n): ")
-                
-                if confirmacao.lower() == 's':
-                    cursor.execute("DELETE FROM filme_diretor WHERE id_diretor = %s", (id_diretor,))
-                    print(f"   ✅ {qtd_filmes} vínculo(s) removido(s)")
-                else:
-                    print("   ❌ Operação cancelada!")
-                    return False
+                cursor.execute("DELETE FROM filme_diretor WHERE id_diretor = %s", (id_diretor,))
             else:
-                print(f"❌ Não é possível deletar!")
-                print(f"   Diretor possui {qtd_filmes} filme(s) vinculado(s).")
-                print(f"   Use deletar_diretor(id, forcar=True) para forçar a exclusão.")
-                print(f"   Ou use desativar_diretor(id) para soft delete.")
-                return False
+                return qtd_filmes
         
-        cursor.execute("DELETE FROM diretor WHERE id_diretor = %s", (id_diretor,))
-        con.commit()
-        print(f"✅ Diretor ID {id_diretor} removido!")
-        return True
+        if qtd_filmes == 0 or forcar is True:
+            cursor.execute("DELETE FROM diretor WHERE id_diretor = %s", (id_diretor,))
+            con.commit()
+            return True
+        
+        return False 
         
     except Exception as e:
         print(f"❌ Erro ao deletar diretor: {e}")

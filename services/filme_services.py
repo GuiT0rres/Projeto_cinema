@@ -120,47 +120,54 @@ def atualizar_filme(id_filme, titulo=None, genero=None, ano=None, classificacao=
 
 
 def deletar_filme(id_filme):
-    """Remove um filme, APENAS se não estiver vinculado a sessões ou diretores"""
+    """Deleta um filme, seus vínculos (diretores/sessões) e ingressos relacionados."""
     con = criar_conexao()
     if not con:
         return False
-    
+
     cursor = None
     try:
         cursor = con.cursor()
-        
-        cursor.execute("SELECT COUNT(*) FROM sessao WHERE id_filme = %s", (id_filme,))
-        qtd_sessoes = cursor.fetchone()[0]
-        if qtd_sessoes > 0:
-            print(f"❌ Não é possível deletar! Filme está em {qtd_sessoes} sessão(ões).")
-            return False
-            
-        cursor.execute("SELECT COUNT(*) FROM filme_diretor WHERE id_filme = %s", (id_filme,))
-        qtd_diretores = cursor.fetchone()[0]
-        if qtd_diretores > 0:
-            print(f"❌ Não é possível deletar! Filme está vinculado a {qtd_diretores} diretor(es).")
-            return False
 
+        # Encontra as sessões ligadas ao filme para deletar os ingressos primeiro
+        cursor.execute("SELECT id_sessao FROM sessao WHERE id_filme = %s", (id_filme,))
+        sessoes_ids = [row[0] for row in cursor.fetchall()]
+
+        if sessoes_ids:
+            # Constrói placeholders (%s) dinamicamente para a lista de IDs
+            sessoes_placeholders = ', '.join(['%s'] * len(sessoes_ids))
+            
+            # 1. Deletar INGRESSOS que dependem dessas sessões
+            cursor.execute(f"DELETE FROM ingressos WHERE id_sessao IN ({sessoes_placeholders})", sessoes_ids)
+            print(f"ℹ️ {cursor.rowcount} ingresso(s) cancelado(s) devido à exclusão do filme.")
+
+        # 2. Deletar vínculos de diretores (filme_diretor)
+        cursor.execute("DELETE FROM filme_diretor WHERE id_filme = %s", (id_filme,))
+        print(f"ℹ️ {cursor.rowcount} vínculo(s) de diretor removido(s).")
+        
+        # 3. Deletar as sessões
+        cursor.execute("DELETE FROM sessao WHERE id_filme = %s", (id_filme,))
+        print(f"ℹ️ {cursor.rowcount} sessão(ões) dependente(s) removida(s).")
+        
+        # 4. Deletar o filme
         cursor.execute("DELETE FROM filme WHERE id_filme = %s", (id_filme,))
-        con.commit()
         
         if cursor.rowcount > 0:
-            print(f"✅ Filme ID {id_filme} removido!")
+            con.commit()
+            print(f"✅ Filme ID {id_filme} deletado permanentemente.")
             return True
         else:
-            print(f"ℹ️ Filme ID {id_filme} não encontrado.")
+            print(f"❌ Filme ID {id_filme} não encontrado.")
             return False
-            
+
     except Exception as e:
         print(f"❌ Erro ao deletar filme: {e}")
         if con:
             con.rollback()
         return False
     finally:
-        if cursor:
-            cursor.close()
-        if con:
-            con.close()
+        if cursor: cursor.close()
+        if con: con.close()
 
 
 def vincular_filme_diretor(id_filme, id_diretor):
