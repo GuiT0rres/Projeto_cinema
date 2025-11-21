@@ -198,3 +198,49 @@ def vincular_filme_diretor(id_filme, id_diretor):
             cursor.close()
         if con:
             con.close()
+
+def atualizar_filme(id_filme, titulo=None, genero=None, ano=None, classificacao=None, duracao=None):
+    """Atualiza dados de um filme."""
+    con = criar_conexao()
+    if not con:
+        return False
+    
+    cursor = None
+    try:
+        cursor = con.cursor()
+        updates = []
+        params = []
+        
+        if titulo:
+            updates.append("titulo = %s")
+            params.append(titulo)
+        if genero:
+            updates.append("genero = %s")
+            params.append(genero)
+        if ano:
+            updates.append("ano = %s")
+            params.append(ano)
+        if classificacao:
+            updates.append("classificacao = %s")
+            params.append(classificacao)
+        if duracao:
+            updates.append("duracao = %s")
+            params.append(duracao)
+        
+        if updates:
+            params.append(id_filme)
+            sql = f"UPDATE filme SET {', '.join(updates)} WHERE id_filme = %s"
+            cursor.execute(sql, params)
+            con.commit()
+            print(f"✅ Filme ID {id_filme} atualizado!")
+            return True
+        else:
+            print("⚠️ Nenhum dado para atualizar!")
+            return False
+    except Exception as e:
+        print(f"❌ Erro ao atualizar filme: {e}")
+        if con: con.rollback()
+        return False
+    finally:
+        if cursor: cursor.close()
+        if con: con.close()

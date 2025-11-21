@@ -101,3 +101,39 @@ def deletar_sessao(id_sessao):
     finally:
         if cursor: cursor.close()
         if con: con.close()
+
+def atualizar_sessao(id_sessao, data=None, horario=None, tipo_exibicao=None, id_filme=None, id_sala=None):
+    """Atualiza dados de uma sessão."""
+    con = criar_conexao()
+    if not con:
+        return False
+    
+    cursor = None
+    try:
+        cursor = con.cursor()
+        updates = []
+        params = []
+        
+        if data: updates.append("data = %s"); params.append(data)
+        if horario: updates.append("horario = %s"); params.append(horario)
+        if tipo_exibicao: updates.append("tipo_exibicao = %s"); params.append(tipo_exibicao)
+        if id_filme: updates.append("id_filme = %s"); params.append(id_filme)
+        if id_sala: updates.append("id_sala = %s"); params.append(id_sala)
+        
+        if updates:
+            params.append(id_sessao)
+            sql = f"UPDATE sessao SET {', '.join(updates)} WHERE id_sessao = %s"
+            cursor.execute(sql, params)
+            con.commit()
+            print(f"✅ Sessão ID {id_sessao} atualizada!")
+            return True
+        else:
+            print("⚠️ Nenhum dado para atualizar!")
+            return False
+    except Exception as e:
+        print(f"❌ Erro ao atualizar sessão: {e}")
+        if con: con.rollback()
+        return False
+    finally:
+        if cursor: cursor.close()
+        if con: con.close()

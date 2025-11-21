@@ -3,14 +3,16 @@ from services.filme_services import (
     inserir_filme, 
     listar_filmes, 
     deletar_filme,
-    vincular_filme_diretor
+    vincular_filme_diretor,
+    atualizar_filme
 )
 from services.diretor_services import (
     inserir_diretor, 
     listar_diretores, 
     deletar_diretor,
     desativar_diretor,
-    reativar_diretor
+    reativar_diretor,
+    atualizar_diretor
 )
 from services.sala_services import (
     inserir_sala, 
@@ -20,7 +22,8 @@ from services.sala_services import (
 from services.sessao_services import (
     inserir_sessao, 
     listar_sessoes, 
-    deletar_sessao
+    deletar_sessao,
+    atualizar_sessao
 )
 from services.ingressos_services import (
     inserir_ingresso, 
@@ -36,7 +39,8 @@ from services.cliente_services import (
     desativar_cliente,
     reativar_cliente,
     deletar_cliente,
-    deletar_cliente_e_ingressos_forcado
+    deletar_cliente_e_ingressos_forcado,
+    atualizar_cliente
 )
 import getpass
 
@@ -52,10 +56,11 @@ SENHA_FUNCIONARIO = "admin"
 # ========================================
 
 def mostrar_menu_filmes():
-    print("\n" + "--- 🎬 GERENCIAR FILMES ---")
+    print("\n--- 🎬 GERENCIAR FILMES ---")
     print("1. Adicionar Filme")
     print("2. Listar Filmes (com diretores)")
-    print("3. Deletar Filme")
+    print("3. Alterar Filme")
+    print("4. Deletar Filme") 
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -73,6 +78,7 @@ def menu_filmes():
                 classificacao = int(input("Classificação: "))
                 duracao = input("Duração (ex: 02:30): ")
                 inserir_filme(titulo, genero, ano, classificacao, duracao)
+                input("Pressione enter para voltar ao menu...")
 
             elif opcao == '2':
                 print("\n📋 LISTA DE FILMES")
@@ -82,14 +88,41 @@ def menu_filmes():
                         diretores = f[6] if f[6] else "Nenhum diretor vinculado"
                         print(f"  [{f[0]}] {f[1]} ({f[3]}) - {f[2]} - {f[4]}+ - {f[5]}")
                         print(f"      ➡️  Diretor(es): {diretores}")
+                        input("Pressione enter para voltar ao menu...")
                 else:
                     print("  Nenhum filme cadastrado.")
+                    input("Pressione enter para voltar ao menu...")
+                    
 
-            elif opcao == '3':
+            elif opcao == '3': 
+                print("\n✏️ ALTERAR FILME")
+                filmes = listar_filmes()
+                if not filmes:
+                    print("❌ Nenhum filme para alterar.")
+                    input("Pressione enter para voltar ao menu...")
+                    continue
+                
+                for f in filmes:
+                     print(f"  [{f[0]}] {f[1]}")
+                id_filme = int(input("ID do Filme a alterar: "))
+                
+                print("\n-- Deixe o campo em branco para manter o valor atual --")
+                titulo = input("Novo Título: ") or None
+                genero = input("Novo Gênero: ") or None
+                ano = input("Novo Ano: ")
+                ano = int(ano) if ano else None
+                classificacao = input("Nova Classificação: ")
+                classificacao = int(classificacao) if classificacao else None
+                duracao = input("Nova Duração (ex: 02:30): ") or None
+                atualizar_filme(id_filme, titulo, genero, ano, classificacao, duracao)
+                input("Pressione enter para voltar ao menu...")
+
+            elif opcao == '4':
                 print("\n🗑️ DELETAR FILME")
                 filmes = listar_filmes()
                 if not filmes:
                     print("❌ Nenhum filme para deletar.")
+                    input("Pressione enter para voltar ao menu...")
                     continue
                 
                 print("\n📺 Filmes disponíveis:")
@@ -97,6 +130,7 @@ def menu_filmes():
                      print(f"  [{f[0]}] {f[1]}")
                 id_filme = int(input("ID do Filme a deletar: "))
                 deletar_filme(id_filme)
+                input("Pressione enter para voltar ao menu...")
             
             elif opcao == '0':
                 print("Voltando ao menu principal...")
@@ -123,9 +157,10 @@ def mostrar_menu_diretores():
     print("\n" + "--- 🧑‍ GERENCIAR DIRETORES ---")
     print("1. Adicionar Diretor (e vincular filme)")
     print("2. Listar Diretores")
-    print("3. Desativar Diretor")
-    print("4. Reativar Diretor")
-    print("5. Deletar Diretor")
+    print("3. Alterar Diretor")
+    print("4. Desativar Diretor")
+    print("5. Reativar Diretor")
+    print("6. Deletar Diretor")
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -140,7 +175,8 @@ def menu_diretores():
                 nome = input("Nome do diretor: ")
                 nacionalidade = input("Nacionalidade: ")
                 id_diretor_criado = inserir_diretor(nome, nacionalidade)
-                
+                input("Pressione enter para voltar ao menu...")
+
                 if not id_diretor_criado:
                     continue 
                 
@@ -151,6 +187,7 @@ def menu_diretores():
                     filmes = listar_filmes()
                     if not filmes:
                         print("❌ Nenhum filme cadastrado para vincular.")
+                        input("Pressione enter para voltar ao menu...")
                         continue 
 
                     print("\n📺 Filmes disponíveis:")
@@ -159,6 +196,7 @@ def menu_diretores():
                     
                     if id_filme not in [f[0] for f in filmes]:
                         print("❌ ID de filme inválido!")
+                        input("Pressione enter para voltar ao menu...")
                         continue
                     vincular_filme_diretor(id_filme, id_diretor_criado)
 
@@ -168,47 +206,76 @@ def menu_diretores():
                 ver_inativos = input("Deseja ver também os diretores inativos? (s/n): ").strip().lower()
                 mostrar_tudo = (ver_inativos == 's')
                 
-                diretores = listar_diretores(incluir_inativos=mostrar_tudo) 
+                diretores = listar_diretores(incluir_inativos=mostrar_tudo)
+                
                 
                 if diretores:
                     print(f"\n--- Exibindo {'TODOS' if mostrar_tudo else 'ATIVOS'} ---")
                     for d in diretores:
                         status = "✅" if d[3] else "❌ INATIVO" 
                         print(f"  [{d[0]}] {d[1]} - {d[2]} (Status: {status})")
+                        input("Pressione enter para voltar ao menu...")
                 else:
                     print("  Nenhum diretor cadastrado.")
+                    input("Pressione enter para voltar ao menu...")
             
-            elif opcao == '3':
+            elif opcao == '3': 
+                print("\n✏️ ALTERAR DIRETOR")
+                diretores = listar_diretores(incluir_inativos=True)
+                if not diretores:
+                    print("❌ Nenhum diretor cadastrado.")
+                    input("Pressione enter para voltar ao menu...")
+                    continue
+                
+                for d in diretores:
+                    status = "✅" if d[3] else "❌ INATIVO" 
+                    print(f"  [{d[0]}] {d[1]} (Status: {status})")
+
+                id_diretor = int(input("\nID do Diretor a alterar: "))
+                
+                print("\n-- Deixe o campo em branco para manter o valor atual --")
+                nome = input("Novo Nome: ") or None
+                nacionalidade = input("Nova Nacionalidade: ") or None
+
+                atualizar_diretor(id_diretor, nome, nacionalidade)
+                input("Pressione enter para voltar ao menu...")
+
+            elif opcao == '4':
                 print("\n👻 DESATIVAR DIRETOR")
                 diretores = listar_diretores(incluir_inativos=False)
                 if not diretores:
                     print("❌ Nenhum diretor ativo para desativar.")
+                    input("Pressione enter para voltar ao menu...")
                     continue
                 
                 print("\n👤 Diretores Ativos:")
                 for d in diretores: print(f"  [{d[0]}] {d[1]} - {d[2]}")
                 id_diretor = int(input("\nID do Diretor a desativar: "))
                 desativar_diretor(id_diretor)
+                input("Pressione enter para voltar ao menu...")
 
-            elif opcao == '4':
+            elif opcao == '5':
                 print("\n♻️ REATIVAR DIRETOR")
                 diretores_todos = listar_diretores(incluir_inativos=True)
                 diretores_inativos = [d for d in diretores_todos if d[3] is False]
                 
                 if not diretores_inativos:
                     print("❌ Nenhum diretor inativo para reativar.")
+                    input("\nPressione Enter para continuar...") 
                     continue
                 
                 print("\n👤 Diretores Inativos:")
                 for d in diretores_inativos: print(f"  [{d[0]}] {d[1]} - {d[2]}")
                 id_diretor = int(input("\nID do Diretor a reativar: "))
                 reativar_diretor(id_diretor)
+                input("\nPressione Enter para continuar...") 
 
-            elif opcao == '5':
+            elif opcao == '6':
                 print("\n🚨 DELETAR DIRETOR (PERMANENTE)")
                 diretores = listar_diretores(incluir_inativos=True)
                 if not diretores:
                     print("❌ Nenhum diretor para deletar.")
+                    input("\nPressione Enter para continuar...") 
                     continue
                 
                 print("\n👤 Diretores (Ativos e Inativos):")
@@ -241,6 +308,7 @@ def menu_diretores():
             
             else:
                 print("\n❌ Opção inválida!")
+                input("\nPressione Enter para continuar...")
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
@@ -271,7 +339,7 @@ def mostrar_menu_funcionario():
 def menu_funcionario():
     while True:
         mostrar_menu_funcionario()
-        opcao = input("Escolha uma opção: ")
+        opcao = input("\nEscolha uma opção: ")
 
         if opcao == '1':
             menu_filmes()
@@ -358,12 +426,13 @@ def menu_consumidor():
 # ========================================
 
 def mostrar_menu_clientes():
-    print("\n" + "--- 👤 GERENCIAR CLIENTES ---")
+    print("\n--- 👤 GERENCIAR CLIENTES ---")
     print("1. Adicionar Cliente")
     print("2. Listar Clientes")
     print("3. Desativar Cliente")
     print("4. Reativar Cliente")
-    print("5. Deletar Cliente (PERMANENTE)")
+    print("5. Alterar Cliente")
+    print("6. Deletar Cliente (PERMANENTE)")
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -392,6 +461,7 @@ def menu_clientes():
                 
                 email = input("Email: ")
                 inserir_cliente(nome, cpf, email)
+                input("\nPressione Enter para continuar...")
             
             elif opcao == '2':
                 print("\n📋 LISTA DE CLIENTES")
@@ -410,18 +480,21 @@ def menu_clientes():
                         print(f"  [{c[0]}] {c[2]} - CPF: {c[1]} - {status_icon}")
                 else:
                     print("  Nenhum cliente encontrado.")
+                input("\nPressione Enter para continuar...")
             
             elif opcao == '3':
                 print("\n👻 DESATIVAR CLIENTE")
                 clientes = listar_clientes(incluir_inativos=False)
                 if not clientes:
                     print("❌ Nenhum cliente ativo para desativar.")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n👤 Clientes Ativos:")
                 for c in clientes: print(f"  [{c[0]}] {c[2]} - CPF: {c[1]}")
                 id_cliente = int(input("\nID do Cliente a desativar: "))
                 desativar_cliente(id_cliente)
+                input("\nPressione Enter para continuar...") 
 
             elif opcao == '4':
                 print("\n♻️ REATIVAR CLIENTE")
@@ -430,18 +503,43 @@ def menu_clientes():
                 
                 if not clientes_inativos:
                     print("❌ Nenhum cliente inativo para reativar.")
+                    input("\nPressione Enter para continuar...") 
                     continue
                 
                 print("\n👤 Clientes Inativos:")
                 for c in clientes_inativos: print(f"  [{c[0]}] {c[2]} - CPF: {c[1]}")
                 id_cliente = int(input("\nID do Cliente a reativar: "))
                 reativar_cliente(id_cliente)
+                input("\nPressione Enter para continuar...") 
+            
+            elif opcao == '5': 
+                print("\n✏️ ALTERAR CLIENTE")
+                clientes = listar_clientes(incluir_inativos=True)
+                if not clientes:
+                    print("❌ Nenhum cliente para alterar.")
+                    input("\nPressione Enter para continuar...") 
+                    continue
+                
+                for c in clientes:
+                    status = "✅" if c[4] else "❌ INATIVO"
+                    print(f"  [{c[0]}] {c[2]} (Status: {status})")
 
-            elif opcao == '5':
+                id_cliente = int(input("\nID do Cliente a alterar: "))
+                
+                print("\n-- Deixe o campo em branco para manter o valor atual --")
+                nome = input("Novo Nome: ") or None
+                email = input("Novo Email: ") or None
+
+                # CPF não é alterado
+                atualizar_cliente(id_cliente, nome, email)
+                input("\nPressione Enter para continuar...") 
+
+            elif opcao == '6':
                 print("\n🚨 DELETAR CLIENTE (PERMANENTE)")
                 clientes = listar_clientes(incluir_inativos=True)
                 if not clientes:
                     print("❌ Nenhum cliente para deletar.")
+                    input("\nPressione Enter para continuar...") 
                     continue
                 
                 print("\n👤 Clientes:")
@@ -478,6 +576,7 @@ def menu_clientes():
             
             else:
                 print("\n❌ Opção inválida!")
+                input("\nPressione Enter para continuar...")
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
@@ -500,7 +599,8 @@ def mostrar_menu_salas_sessoes():
     print("3. Deletar Sala")
     print("4. Adicionar Sessão")
     print("5. Listar Sessões")
-    print("6. Deletar Sessão")
+    print("6. Alterar Sessão")
+    print("7. Deletar Sessão")
     print("0. Voltar ao Menu Principal")
     print("="*50)
 
@@ -516,7 +616,8 @@ def menu_salas_sessoes():
                 capacidade = int(input("Capacidade: "))
                 tipo = input("Tipo (IMAX/3D/Standard): ")
                 inserir_sala(numero, capacidade, tipo)
-            
+                input("\nPressione Enter para continuar...")
+
             elif opcao == '2':
                 print("\n📋 LISTA DE SALAS")
                 salas = listar_salas()
@@ -525,18 +626,21 @@ def menu_salas_sessoes():
                         print(f"  [{s[0]}] Sala {s[1]} - Capacidade: {s[2]} - Tipo: {s[3]}")
                 else:
                     print("Nenhuma sala cadastrada.")
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '3':
                 print("\n🗑️ DELETAR SALA")
                 salas = listar_salas()
                 if not salas:
                     print("❌ Nenhuma sala para deletar.")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n🏛️ Salas disponíveis:")
                 for s in salas: print(f"  [{s[0]}] Sala {s[1]}")
                 id_sala = int(input("ID da Sala a deletar: "))
                 deletar_sala(id_sala)
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '4':
                 print("\n➕ ADICIONAR SESSÃO")
@@ -558,6 +662,7 @@ def menu_salas_sessoes():
                 filmes = listar_filmes()
                 if not filmes:
                     print("❌ Cadastre filmes primeiro!")
+                    input("\nPressione Enter para continuar...")
                     continue
                 print("\n📺 Filmes disponíveis:")
                 for f in filmes: print(f"  [{f[0]}] {f[1]}")
@@ -566,34 +671,66 @@ def menu_salas_sessoes():
                 salas = listar_salas()
                 if not salas:
                     print("❌ Cadastre salas primeiro!")
+                    input("\nPressione Enter para continuar...")
                     continue
                 print("\n🏛️ Salas disponíveis:")
                 for s in salas: print(f"  [{s[0]}] Sala {s[1]}")
                 id_sala = int(input("ID da Sala: "))
                 
                 inserir_sessao(data, horario, tipo_exibicao, id_filme, id_sala)
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '5':
                 print("\n📋 LISTA DE SESSÕES")
                 sessoes = listar_sessoes()
                 if sessoes:
                     for s in sessoes:
-                        print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
+                        print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala: {s[4]}")
                 else:
                     print("  Nenhuma sessão cadastrada.")
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '6':
+                print("\n✏️ ALTERAR SESSÃO")
+                sessoes = listar_sessoes()
+                if not sessoes:
+                    print("❌ Nenhuma sessão cadastrada.")
+                    input("\nPressione Enter para continuar...")
+                    continue
+                
+                for s in sessoes:
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala: {s[4]}")
+
+                id_sessao = int(input("\nID da Sessão a alterar: "))
+                
+                print("\n-- Deixe o campo em branco para manter o valor atual --")
+                data = input("Nova Data (AAAA-MM-DD): ") or None
+                horario = input("Novo Horário (HH:MM): ") or None
+                tipo_exibicao = input("Novo Tipo de exibição (2D/3D/IMAX): ") or None
+                
+                # Para ID's, o usuário deve digitar um ID existente ou deixar em branco
+                id_filme_str = input("Novo ID do Filme: ")
+                id_filme = int(id_filme_str) if id_filme_str else None
+                id_sala_str = input("Novo ID da Sala: ")
+                id_sala = int(id_sala_str) if id_sala_str else None
+                
+                atualizar_sessao(id_sessao, data, horario, tipo_exibicao, id_filme, id_sala)
+                input("\nPressione Enter para continuar...")
+
+            elif opcao == '7':
                 print("\n🗑️ DELETAR SESSÃO")
                 sessoes = listar_sessoes()
                 if not sessoes:
                     print("❌ Nenhuma sessão para deletar.")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n📺 Sessões disponíveis:")
                 for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala: {s[4]}")
                 id_sessao = int(input("ID da Sessão a deletar: "))
                 deletar_sessao(id_sessao)
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '0':
                 print("Voltando ao menu principal...")
@@ -601,6 +738,7 @@ def menu_salas_sessoes():
             
             else:
                 print("\n❌ Opção inválida!")
+                input("\nPressione Enter para continuar...")
 
         except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
@@ -668,7 +806,6 @@ def vender_ingresso_processo():
     try:
         print("\n🎟️ INICIAR VENDA DE INGRESSO")
 
-        
         global PRECO_INTEIRA, PRECO_MEIA
         if PRECO_INTEIRA == 0.0 or PRECO_MEIA == 0.0:
             print("="*50)
@@ -683,7 +820,7 @@ def vender_ingresso_processo():
         
         print("\n📺 Sessões disponíveis:")
         for s in sessoes:
-            print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala ID: {s[4]}")
+            print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} ({s[3]}) - Sala: {s[4]}")
         
         id_sessao = int(input("\nID da Sessão: "))
         
@@ -753,11 +890,11 @@ def vender_ingresso_processo():
 
     except ValueError:
             print("\n❌ ERRO: Valor inválido! Por favor, digite um número.")
-            input("\nPressione Enter para continuar...")
     except KeyboardInterrupt:
         print("\nInterrupção manual detectada. Encerrando...")
     except Exception as e:
         print(f"\n❌ ERRO INESPERADO: {e}")
+    finally:
         input("\nPressione Enter para continuar...")
 
 def menu_vendas():
@@ -784,6 +921,7 @@ def menu_vendas():
                 ingressos = listar_ingressos()
                 if not ingressos:
                     print("❌ Nenhum ingresso para cancelar.")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n🎟️ Ingressos Vendidos:")
@@ -799,11 +937,12 @@ def menu_vendas():
                 sessoes = listar_sessoes()
                 if not sessoes:
                     print("❌ Nenhuma sessão cadastrada!")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n📺 Sessões:")
                 for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala: {s[4]}")
                 id_sessao = int(input("\nID da Sessão: "))
                 
                 assentos = listar_assentos_disponiveis(id_sessao)
@@ -823,19 +962,22 @@ def menu_vendas():
                 sessoes = listar_sessoes()
                 if not sessoes:
                     print("❌ Nenhuma sessão cadastrada!")
+                    input("\nPressione Enter para continuar...")
                     continue
                 
                 print("\n📺 Sessões:")
                 for s in sessoes:
-                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala ID: {s[4]}")
+                    print(f"  [{s[0]}] {s[1]} às {s[2]} - {s[5]} - Sala: {s[4]}")
                 id_sessao = int(input("\nID da Sessão: "))
                 
                 info = verificar_disponibilidade_sessao(id_sessao)
                 if not info:
                     print("❌ Sessão inválida ou sem capacidade definida.")
+                    input("\nPressione Enter para continuar...")
                     continue
                 if info[0] == 0:
                     print("❌ Erro: Sala com capacidade 0.")
+                    input("\nPressione Enter para continuar...")
                     continue
 
                 print(f"\n📊 ESTATÍSTICAS:")
@@ -856,6 +998,7 @@ def menu_vendas():
                     for i, d in enumerate(disponiveis, 1):
                         print(f"  {d[1]}", end="  ")
                         if i % 15 == 0: print()
+                input("\nPressione Enter para continuar...")
 
             elif opcao == '6':
                 definir_precos()

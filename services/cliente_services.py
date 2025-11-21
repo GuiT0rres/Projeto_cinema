@@ -334,3 +334,47 @@ def listar_clientes_com_ingressos():
     finally:
         cursor.close()
         con.close()
+
+def atualizar_cliente(id_cliente, nome=None, email=None):
+    """Atualiza dados de um cliente (não atualiza CPF)."""
+    con = criar_conexao()
+    if not con:
+        return False
+    
+    cursor = None
+    try:
+        cursor = con.cursor()
+        updates = []
+        params = []
+        
+        # 1. Checa e adiciona campos dinamicamente
+        if nome:
+            updates.append("nome = %s")
+            params.append(nome)
+        if email:
+            updates.append("email = %s")
+            params.append(email)
+        
+        # 2. Constrói e executa o SQL se houver updates
+        if updates:
+            params.append(id_cliente)
+            sql = f"UPDATE clientes SET {', '.join(updates)} WHERE id_cliente = %s" 
+            cursor.execute(sql, params)
+            
+            if cursor.rowcount > 0:
+                con.commit()
+                print(f"✅ Cliente ID {id_cliente} atualizado!")
+                return True
+            else:
+                print(f"❌ Cliente ID {id_cliente} não encontrado.")
+                return False
+        else:
+            print("⚠️ Nenhum dado para atualizar!")
+            return False
+    except Exception as e:
+        print(f"❌ Erro ao atualizar cliente: {e}")
+        if con: con.rollback()
+        return False
+    finally:
+        if cursor: cursor.close()
+        if con: con.close()

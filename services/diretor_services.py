@@ -192,6 +192,42 @@ def deletar_diretor(id_diretor, forcar=False):
         if con:
             con.close()
 
+def atualizar_diretor(id_diretor, nome=None, nacionalidade=None):
+    """Atualiza dados de um diretor (nome e nacionalidade)."""
+    con = criar_conexao()
+    if not con:
+        return False
+    
+    cursor = None
+    try:
+        cursor = con.cursor()
+        updates = []
+        params = []
+        
+        if nome:
+            updates.append("nome_diretor = %s")
+            params.append(nome)
+        if nacionalidade:
+            updates.append("nacionalidade = %s")
+            params.append(nacionalidade)
+        
+        if updates:
+            params.append(id_diretor)
+            sql = f"UPDATE diretor SET {', '.join(updates)} WHERE id_diretor = %s"
+            cursor.execute(sql, params)
+            con.commit()
+            print(f"✅ Diretor ID {id_diretor} atualizado!")
+            return True
+        else:
+            print("⚠️ Nenhum dado para atualizar!")
+            return False
+    except Exception as e:
+        print(f"❌ Erro ao atualizar diretor: {e}")
+        if con: con.rollback()
+        return False
+    finally:
+        if cursor: cursor.close()
+        if con: con.close()
 
 def desativar_diretor(id_diretor):
     """
