@@ -86,6 +86,7 @@ def listar_ingressos():
                 i.preco,
                 i.tipo_ingresso,
                 a.numero_assento,
+                sa.numero_sala,
                 s.data,
                 s.horario,
                 f.titulo,
@@ -93,6 +94,7 @@ def listar_ingressos():
             FROM ingressos i
             INNER JOIN assento a ON i.id_assento = a.id_assento
             INNER JOIN sessao s ON i.id_sessao = s.id_sessao
+            INNER JOIN sala sa ON s.id_sala = sa.id_sala
             INNER JOIN filme f ON s.id_filme = f.id_filme
             INNER JOIN clientes c ON i.id_cliente = c.id_cliente
             ORDER BY i.id_ingresso

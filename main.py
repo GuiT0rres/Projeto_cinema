@@ -1,4 +1,5 @@
 from datetime import datetime
+from services.auth_services import autenticar_funcionario
 from services.filme_services import (
     inserir_filme, 
     listar_filmes, 
@@ -46,10 +47,6 @@ import getpass
 
 PRECO_INTEIRA = 0.0
 PRECO_MEIA = 0.0
-
-USUARIO_FUNCIONARIO = "admin"
-SENHA_FUNCIONARIO = "admin"
-
 
 # ========================================
 # FUNÇÕES DE SUBMENU (FILMES)
@@ -911,7 +908,7 @@ def menu_vendas():
                 ingressos = listar_ingressos()
                 if ingressos:
                     for i in ingressos:
-                        print(f"  [{i[0]}] {i[6]} - {i[4]} às {i[5]} - Assento: {i[3]} - {i[2]} - R$ {i[1]:.2f} - Cliente: {i[7]}")
+                        print(f"  [{i[0]}] {i[7]} - Sala {i[4]} - {i[5]} às {i[6]} - Assento: {i[3]} - {i[2]} - R$ {i[1]:.2f} - Cliente: {i[8]}")
                 else:
                     print("Nenhum ingresso vendido.")
                 input("\nPressione Enter para continuar...")
@@ -1045,7 +1042,7 @@ def main():
             usuario = input("Usuário: ")
             senha = getpass.getpass("Senha: ")
 
-            if usuario == USUARIO_FUNCIONARIO and senha == SENHA_FUNCIONARIO:
+            if autenticar_funcionario(usuario, senha):
                 print("✅ Acesso liberado!")
                 menu_funcionario()
             else:
